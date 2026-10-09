@@ -30,7 +30,12 @@ export function getApiBaseUrl(): string {
     return envUrl.trim().replace(/\/+$/, '');
   }
 
-  // 3. Same-origin relative paths for web browser
+  // 3. Production HTTPS backend fallback for native mobile devices (Capacitor APK)
+  if (isNativePlatform()) {
+    return 'https://ais-pre-nuuwubln5i3rdo3sy2naky-210781881085.europe-west1.run.app';
+  }
+
+  // 4. Same-origin relative paths for web browser
   return '';
 }
 
