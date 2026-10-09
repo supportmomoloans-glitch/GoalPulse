@@ -1,5 +1,6 @@
 import express, { type Request, type Response } from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { FootballService, SUPPORTED_COMPETITIONS } from './server/services/footballData.ts';
@@ -12,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const startTime = Date.now();
 
 app.use(express.json());
@@ -166,7 +167,8 @@ app.get('/api/fixtures/:fixtureId/lineups', async (req: Request, res: Response) 
 app.get('/api/standings', async (req: Request, res: Response) => {
   try {
     const league = Number(req.query.league) || 39;
-    const season = Number(req.query.season) || 2024;
+    const comp = SUPPORTED_COMPETITIONS.find((c) => c.id === league);
+    const season = req.query.season ? Number(req.query.season) : (comp?.season || 2026);
     const result = await FootballService.getStandings(league, season);
     res.json({ success: true, data: result.data });
   } catch (err) {
@@ -178,7 +180,8 @@ app.get('/api/standings', async (req: Request, res: Response) => {
 app.get('/api/top-scorers', async (req: Request, res: Response) => {
   try {
     const league = Number(req.query.league) || 39;
-    const season = Number(req.query.season) || 2024;
+    const comp = SUPPORTED_COMPETITIONS.find((c) => c.id === league);
+    const season = req.query.season ? Number(req.query.season) : (comp?.season || 2026);
     const result = await FootballService.getTopScorers(league, season);
     res.json({ success: true, data: result.data });
   } catch (err) {
@@ -218,12 +221,28 @@ app.get('/api/search', async (req: Request, res: Response) => {
   }
 });
 
+// 15. Catch-all 404 for unhandled API routes (prevents returning index.html)
+app.all('/api/*', (req: Request, res: Response) => {
+  res.status(404).json({ success: false, error: `API endpoint not found: ${req.method} ${req.path}` });
+});
+
 // Vite Middleware integration for dev / static for prod
 async function startServer() {
   if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+    const distDir = fs.existsSync(path.resolve(__dirname, 'dist', 'index.html'))
+      ? path.resolve(__dirname, 'dist')
+      : fs.existsSync(path.resolve(__dirname, 'index.html'))
+      ? __dirname
+      : path.resolve(process.cwd(), 'dist');
+
+    app.use(express.static(distDir));
+    app.get('*', (req: Request, res: Response) => {
+      const indexHtml = path.resolve(distDir, 'index.html');
+      if (fs.existsSync(indexHtml)) {
+        res.sendFile(indexHtml);
+      } else {
+        res.status(404).send('GoalPulse frontend bundle not found. Please build the web app.');
+      }
     });
   } else {
     const { createServer } = await import('vite');
@@ -233,6 +252,16 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   }
+
+  // Global error handler
+  app.use((err: any, req: Request, res: Response, next: any) => {
+    console.error('GoalPulse API Server Error:', err);
+    if (res.headersSent) return next(err);
+    if (req.path.startsWith('/api')) {
+      return res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+    next(err);
+  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`GoalPulse Server running on http://0.0.0.0:${PORT}`);

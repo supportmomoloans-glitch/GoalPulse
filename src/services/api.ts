@@ -192,17 +192,19 @@ export const api = {
     );
   },
 
-  async getStandings(leagueId: number, season = 2024): Promise<ApiResponse<StandingRow[]>> {
+  async getStandings(leagueId: number, season?: number): Promise<ApiResponse<StandingRow[]>> {
+    const q = season ? `&season=${season}` : '';
     return request<StandingRow[]>(
-      `/api/standings?league=${leagueId}&season=${season}`,
-      `standings_${leagueId}_${season}`
+      `/api/standings?league=${leagueId}${q}`,
+      `standings_${leagueId}_${season || 'current'}`
     );
   },
 
-  async getTopScorers(leagueId: number, season = 2024): Promise<ApiResponse<TopScorer[]>> {
+  async getTopScorers(leagueId: number, season?: number): Promise<ApiResponse<TopScorer[]>> {
+    const q = season ? `&season=${season}` : '';
     return request<TopScorer[]>(
-      `/api/top-scorers?league=${leagueId}&season=${season}`,
-      `topscorers_${leagueId}_${season}`
+      `/api/top-scorers?league=${leagueId}${q}`,
+      `topscorers_${leagueId}_${season || 'current'}`
     );
   },
 
