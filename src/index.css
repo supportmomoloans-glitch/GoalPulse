@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* GoalPulse Strict Design Tokens - Light Theme */
+    --bg-canvas: #F0EFF8;
+    --surface-card: #E6E3F2;
+    --surface-subtle: #DDD8EC;
+    --text-primary: #211B35;
+    --text-secondary: #514966;
+    --text-muted: #6C6285;
+    --icon-primary: #35264F;
+    --accent-purple: #7138E8;
+    --accent-purple-light: #8B5CF6;
+    --accent-lavender: #C4B5FD;
+    --border-subtle: #C9C2DD;
+
+    /* Refined Claymorphism Lighting (no stark white glare, defined depth) */
+    --clay-shadow-out: 4px 6px 14px rgba(45, 30, 80, 0.08), -3px -3px 10px rgba(255, 255, 255, 0.8);
+    --clay-shadow-inset: inset 1px 1px 2px rgba(255, 255, 255, 0.7), inset -1px -1px 2px rgba(45, 30, 80, 0.05);
+    --clay-recessed: inset 2px 2px 5px rgba(45, 30, 80, 0.12), inset -2px -2px 4px rgba(255, 255, 255, 0.7);
+  }
+
+  .dark {
+    /* GoalPulse Strict Design Tokens - Dark Theme */
+    --bg-canvas: #120E22;
+    --surface-card: #1E1833;
+    --surface-subtle: #272042;
+    --text-primary: #F5F3FC;
+    --text-secondary: #B8B0D3;
+    --text-muted: #968DB8;
+    --icon-primary: #DDD6FE;
+    --accent-purple: #8B5CF6;
+    --accent-purple-light: #A78BFA;
+    --accent-lavender: #3B2D5F;
+    --border-subtle: #362C52;
+
+    /* Refined Dark Claymorphism */
+    --clay-shadow-out: 5px 7px 16px rgba(0, 0, 0, 0.5), -3px -3px 10px rgba(45, 35, 75, 0.25);
+    --clay-shadow-inset: inset 1px 1px 2px rgba(255, 255, 255, 0.06), inset -1px -1px 2px rgba(0, 0, 0, 0.35);
+    --clay-recessed: inset 3px 3px 6px rgba(0, 0, 0, 0.5), inset -2px -2px 4px rgba(45, 35, 75, 0.25);
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+}
+
+/* Claymorphism Surfaces */
+.clay-card {
+  background-color: var(--surface-card);
+  border-radius: 20px;
+  box-shadow: var(--clay-shadow-out), var(--clay-shadow-inset);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clay-card-purple {
+  background: linear-gradient(135deg, #7138E8 0%, #5B21B6 100%);
+  color: #FFFFFF;
+  border-radius: 20px;
+  box-shadow: 4px 6px 18px rgba(113, 56, 232, 0.35), inset 1px 1px 2px rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.clay-button {
+  background-color: var(--surface-card);
+  color: var(--icon-primary);
+  box-shadow: 3px 4px 10px rgba(45, 30, 80, 0.08), -2px -2px 6px rgba(255, 255, 255, 0.8), inset 1px 1px 2px rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.15s ease-out;
+}
+
+.dark .clay-button {
+  box-shadow: 3px 4px 10px rgba(0, 0, 0, 0.4), -2px -2px 6px rgba(45, 35, 75, 0.2);
+}
+
+.clay-button:active {
+  transform: scale(0.97);
+  box-shadow: var(--clay-recessed);
+}
+
+.clay-button-primary {
+  background: linear-gradient(135deg, #7138E8 0%, #5B21B6 100%);
+  color: #FFFFFF;
+  box-shadow: 3px 4px 12px rgba(113, 56, 232, 0.35), inset 1px 1px 2px rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.15s ease-out;
+}
+
+.clay-button-primary:active {
+  transform: scale(0.97);
+  box-shadow: inset 2px 2px 5px rgba(35, 10, 80, 0.5);
+}
+
+.clay-inset {
+  background-color: var(--surface-subtle);
+  box-shadow: var(--clay-recessed);
+  border: 1px solid var(--border-subtle);
+}
+
+.clay-pill-active {
+  background-color: var(--accent-purple);
+  color: #FFFFFF !important;
+  font-weight: 800;
+  box-shadow: 2px 3px 8px rgba(113, 56, 232, 0.35), inset 1px 1px 2px rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.clay-pill-inactive {
+  background-color: var(--surface-card);
+  color: var(--text-secondary);
+  font-weight: 700;
+  box-shadow: 2px 3px 7px rgba(45, 30, 80, 0.07), -1px -1px 4px rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.15s ease-out;
+}
+
+.clay-pill-inactive:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-purple);
+}
+
+.dark .clay-pill-inactive {
+  box-shadow: 2px 3px 7px rgba(0, 0, 0, 0.35);
+}
+
+.dark .clay-pill-inactive:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-purple-light);
+}
+
+/* Scrollbar polish */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(113, 56, 232, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 56, 232, 0.5);
+}

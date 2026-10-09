@@ -1,0 +1,15 @@
+{
+	"appId": "com.goalpulse.football",
+	"appName": "GoalPulse",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https",
+		"cleartext": false
+	},
+	"plugins": {
+		"StatusBar": {
+			"style": "DARK",
+			"backgroundColor": "#161129"
+		}
+	}
+}

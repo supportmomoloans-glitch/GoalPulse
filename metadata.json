@@ -1,0 +1,6 @@
+{
+  "name": "GoalPulse",
+  "description": "Complete football live scores and sports data app with modern claymorphism design, real-time match updates, standings, and East Africa Time scheduling.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
