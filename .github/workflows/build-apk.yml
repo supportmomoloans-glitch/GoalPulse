@@ -34,18 +34,28 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Accept Android SDK Licenses & Prepare Platform
-        run: |
-          if command -v sdkmanager &> /dev/null; then
-            yes | sdkmanager --licenses || true
-            sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
-          elif [ -f "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
-            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
-            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" || true
-          fi
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-35 build-tools;35.0.0 platform-tools'
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew
+
+      - name: Verify Environment & Assets
+        run: |
+          echo "=== Node Version ==="
+          node -v
+          echo "=== Java Version ==="
+          java -version
+          echo "=== Verifying Required Directories ==="
+          test -d android/app/src/main/assets/public || (echo "ERROR: android/app/src/main/assets/public does not exist!" && exit 1)
+          test -d android/capacitor-cordova-android-plugins || (echo "ERROR: android/capacitor-cordova-android-plugins does not exist!" && exit 1)
+          ls -la android/app/src/main/assets/public
+          ls -la android/capacitor-cordova-android-plugins
+          echo "=== Gradle Version ==="
+          cd android
+          ./gradlew --version --console=plain
 
       - name: Prepare Signing Keystore
         run: |
@@ -54,7 +64,7 @@ jobs:
             echo "Using custom keystore from GitHub Secrets..."
             echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/keystore/release.jks
           else
-            echo "Generating self-signed release key for instant installation..."
+            echo "Generating signing key for release..."
             keytool -genkeypair -v \
               -keystore android/app/keystore/release.jks \
               -alias "goalpulse" \
@@ -67,8 +77,8 @@ jobs:
       - name: Build Android APKs
         run: |
           cd android
-          ./gradlew assembleDebug -x lint -x test --no-daemon --stacktrace
-          ./gradlew assembleRelease -x lint -x lintVitalRelease -x test --no-daemon --stacktrace || true
+          ./gradlew assembleDebug --console=plain
+          ./gradlew assembleRelease --console=plain
 
       - name: Collect APK Artifacts
         run: |
