@@ -8,6 +8,7 @@ import {
   Star,
   Flame,
   Radio,
+  Clock,
 } from 'lucide-react';
 import type { Fixture, Competition, NewsArticle } from '../types/football.ts';
 import { MatchCard } from '../components/MatchCard.tsx';
@@ -167,8 +168,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       </div>
 
-      {/* LIVE MATCHES SECTION */}
-      {liveFixtures.length > 0 && (
+      {/* LIVE MATCHES OR NO LIVE MATCHES STATE */}
+      {liveFixtures.length > 0 ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
@@ -197,6 +198,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               />
             ))}
           </div>
+        </div>
+      ) : (
+        <div className="clay-card p-4 rounded-2xl flex items-center justify-between border border-[#C9C2DD] dark:border-[#362C52]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-[#7138E8] dark:text-[#8B5CF6] flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5 stroke-[2.5]" />
+            </div>
+            <div>
+              <p className="text-xs font-black text-[#211B35] dark:text-[#F5F3FC]">No Live Matches Right Now</p>
+              <p className="text-[11px] font-bold text-[#514966] dark:text-[#B8B0D3]">Showing today&apos;s scheduled fixtures below</p>
+            </div>
+          </div>
+          <button
+            onClick={() => onSelectTab('scores')}
+            className="px-3 py-1.5 rounded-xl text-xs font-black clay-button text-[#7138E8] dark:text-[#8B5CF6]"
+          >
+            Schedule
+          </button>
         </div>
       )}
 

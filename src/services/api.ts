@@ -141,12 +141,21 @@ export const api = {
   },
 
   async getCompetitions(): Promise<ApiResponse<Competition[]>> {
-    return request<Competition[]>('/api/competitions', 'competitions');
+    return request<Competition[]>('/api/leagues', 'competitions');
   },
 
   async getLiveFixtures(leagueId?: number): Promise<ApiResponse<Fixture[]>> {
     const q = leagueId ? `?league=${leagueId}` : '';
-    return request<Fixture[]>(`/api/fixtures/live${q}`, `live_${leagueId || 'all'}`);
+    return request<Fixture[]>(`/api/live${q}`, `live_${leagueId || 'all'}`);
+  },
+
+  async getFixtureSummary(fixtureId: number): Promise<ApiResponse<{
+    fixture: Fixture;
+    events: MatchEvent[];
+    statistics: TeamStatistic[];
+    lineups: TeamLineup[];
+  }>> {
+    return request(`/api/fixture/${fixtureId}`, `fixture_summary_${fixtureId}`);
   },
 
   async getFixtures(options: {

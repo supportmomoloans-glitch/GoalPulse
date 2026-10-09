@@ -49,6 +49,7 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [apiNotice, setApiNotice] = useState<string | null>(null);
 
   // Polling ref to manage auto-refresh lifecycle
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -118,31 +119,44 @@ export default function App() {
     loadData();
   }, [loadData]);
 
-  // Background-aware polling for live fixtures
+  // Background-aware polling for live fixtures:
+  // - Auto-refreshes every 30 seconds only while screen is open
+  // - Pauses when there are no live fixtures to protect 100 req/day quota
   useEffect(() => {
     const pollLiveMatches = async () => {
-      // Don't poll if document is hidden or offline
       if (document.hidden || !navigator.onLine) return;
+      if (liveFixtures.length === 0) return;
 
       try {
         const liveRes = await api.getLiveFixtures();
         setLiveFixtures(liveRes.data);
         notificationService.processLiveFixtures(liveRes.data, prefs);
         setLastUpdated(new Date());
-      } catch {
-        // silent fallback
+        setApiNotice(null);
+      } catch (err: any) {
+        if (err?.message?.includes('rate limit') || err?.message?.includes('429')) {
+          setApiNotice('API-Football rate limit reached (100 req/day). Using cached match scores.');
+        }
       }
     };
 
-    const intervalMs = (prefs.refreshInterval || 30) * 1000;
+    const intervalMs = 30000;
     pollingTimerRef.current = setInterval(pollLiveMatches, intervalMs);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && navigator.onLine) {
+        pollLiveMatches();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       if (pollingTimerRef.current) {
         clearInterval(pollingTimerRef.current);
       }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [prefs]);
+  }, [liveFixtures.length, prefs]);
 
   const handleOpenMatchById = async (fixtureId: number) => {
     const existing = liveFixtures.find((f) => f.id === fixtureId) || fixtures.find((f) => f.id === fixtureId);
@@ -189,6 +203,22 @@ export default function App() {
         <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-900 dark:text-amber-300 px-4 py-1.5 text-xs font-bold flex items-center justify-center gap-2">
           <WifiOff className="w-3.5 h-3.5" />
           <span>Offline Mode · Showing cached football records</span>
+        </div>
+      )}
+
+      {/* API Notice / Rate Limit Notice Strip */}
+      {apiNotice && !isOffline && (
+        <div className="bg-purple-500/15 border-b border-purple-500/30 text-purple-900 dark:text-purple-300 px-4 py-1.5 text-xs font-bold flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+            <span>{apiNotice}</span>
+          </div>
+          <button
+            onClick={() => setApiNotice(null)}
+            className="text-[11px] font-black underline ml-2 shrink-0 hover:text-purple-950 dark:hover:text-purple-100"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 

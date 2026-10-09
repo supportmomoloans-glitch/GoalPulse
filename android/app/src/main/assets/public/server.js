@@ -837,26 +837,62 @@ app.get("/api/health", (req, res) => {
     timezone: "Africa/Nairobi"
   });
 });
-app.get("/api/competitions", async (req, res) => {
+var handleLeagues = async (req, res) => {
   try {
     const competitions = await FootballService.getCompetitions();
     res.json({ success: true, data: competitions });
   } catch (err) {
-    res.status(500).json({ success: false, error: "Failed to retrieve competitions" });
+    res.status(500).json({ success: false, error: "Failed to retrieve leagues" });
   }
-});
-app.get("/api/fixtures/live", async (req, res) => {
+};
+app.get("/api/leagues", handleLeagues);
+app.get("/api/competitions", handleLeagues);
+var handleLiveFixtures = async (req, res) => {
   try {
     const league = req.query.league ? Number(req.query.league) : void 0;
     const result = await FootballService.getFixtures({ live: true, league });
     res.json({
       success: true,
       data: result.data,
+      liveCount: result.data.length,
       isStale: result.isStale,
       cachedAt: result.cachedAt
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: "Failed to retrieve live fixtures" });
+    res.status(err?.status === 429 ? 429 : 500).json({
+      success: false,
+      error: err?.message || "Failed to retrieve live fixtures",
+      data: []
+    });
+  }
+};
+app.get("/api/live", handleLiveFixtures);
+app.get("/api/fixtures/live", handleLiveFixtures);
+app.get("/api/fixture/:id", async (req, res) => {
+  try {
+    const fixtureId = Number(req.params.id);
+    const [fixtureRes, eventsRes, statsRes, lineupsRes] = await Promise.all([
+      FootballService.getFixtureById(fixtureId),
+      FootballService.getMatchEvents(fixtureId),
+      FootballService.getMatchStatistics(fixtureId),
+      FootballService.getMatchLineups(fixtureId)
+    ]);
+    if (!fixtureRes.data) {
+      return res.status(404).json({ success: false, error: "Fixture not found" });
+    }
+    res.json({
+      success: true,
+      data: {
+        fixture: fixtureRes.data,
+        events: eventsRes.data,
+        statistics: statsRes.data,
+        lineups: lineupsRes.data
+      },
+      isStale: fixtureRes.isStale || eventsRes.isStale,
+      cachedAt: fixtureRes.cachedAt
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err?.message || "Failed to retrieve fixture details" });
   }
 });
 app.get("/api/fixtures/head-to-head", async (req, res) => {

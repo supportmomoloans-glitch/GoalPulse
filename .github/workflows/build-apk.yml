@@ -25,6 +25,8 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Build Web Application
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL || secrets.VITE_API_URL || 'https://ais-pre-nuuwubln5i3rdo3sy2naky-210781881085.europe-west1.run.app' }}
         run: npm run build
 
       - name: Sync Capacitor Android
@@ -36,10 +38,10 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: 'platforms;android-36 platforms;android-35 build-tools;35.0.0 platform-tools'
+      - name: Accept Android Licenses & Ensure Platforms
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "platforms;android-35" "build-tools;35.0.0" || true
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew
@@ -98,6 +100,7 @@ jobs:
 
       - name: Create GitHub Release & Attach APKs
         uses: softprops/action-gh-release@v2
+        continue-on-error: true
         with:
           tag_name: "build-${{ github.run_number }}"
           name: "GoalPulse Release Build #${{ github.run_number }}"

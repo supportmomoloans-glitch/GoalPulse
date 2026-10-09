@@ -49,29 +49,69 @@ app.get('/api/health', (req: Request, res: Response) => {
   });
 });
 
-// 2. Competitions
-app.get('/api/competitions', async (req: Request, res: Response) => {
+// 2. Leagues / Competitions (/api/leagues and /api/competitions)
+const handleLeagues = async (req: Request, res: Response) => {
   try {
     const competitions = await FootballService.getCompetitions();
     res.json({ success: true, data: competitions });
   } catch (err) {
-    res.status(500).json({ success: false, error: 'Failed to retrieve competitions' });
+    res.status(500).json({ success: false, error: 'Failed to retrieve leagues' });
   }
-});
+};
+app.get('/api/leagues', handleLeagues);
+app.get('/api/competitions', handleLeagues);
 
-// 3. Live Fixtures
-app.get('/api/fixtures/live', async (req: Request, res: Response) => {
+// 3. Live Fixtures (/api/live and /api/fixtures/live)
+const handleLiveFixtures = async (req: Request, res: Response) => {
   try {
     const league = req.query.league ? Number(req.query.league) : undefined;
     const result = await FootballService.getFixtures({ live: true, league });
     res.json({
       success: true,
       data: result.data,
+      liveCount: result.data.length,
       isStale: result.isStale,
       cachedAt: result.cachedAt,
     });
-  } catch (err) {
-    res.status(500).json({ success: false, error: 'Failed to retrieve live fixtures' });
+  } catch (err: any) {
+    res.status(err?.status === 429 ? 429 : 500).json({
+      success: false,
+      error: err?.message || 'Failed to retrieve live fixtures',
+      data: [],
+    });
+  }
+};
+app.get('/api/live', handleLiveFixtures);
+app.get('/api/fixtures/live', handleLiveFixtures);
+
+// 4. Combined Fixture Details (/api/fixture/:id)
+app.get('/api/fixture/:id', async (req: Request, res: Response) => {
+  try {
+    const fixtureId = Number(req.params.id);
+    const [fixtureRes, eventsRes, statsRes, lineupsRes] = await Promise.all([
+      FootballService.getFixtureById(fixtureId),
+      FootballService.getMatchEvents(fixtureId),
+      FootballService.getMatchStatistics(fixtureId),
+      FootballService.getMatchLineups(fixtureId),
+    ]);
+
+    if (!fixtureRes.data) {
+      return res.status(404).json({ success: false, error: 'Fixture not found' });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        fixture: fixtureRes.data,
+        events: eventsRes.data,
+        statistics: statsRes.data,
+        lineups: lineupsRes.data,
+      },
+      isStale: fixtureRes.isStale || eventsRes.isStale,
+      cachedAt: fixtureRes.cachedAt,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || 'Failed to retrieve fixture details' });
   }
 });
 
