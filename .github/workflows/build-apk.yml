@@ -34,38 +34,32 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK Licenses & Prepare Platform
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew
 
       - name: Prepare Signing Keystore
-        id: setup_keystore
         run: |
           mkdir -p android/app/keystore
           if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
-            echo "Using production signing keystore from GitHub Secrets..."
+            echo "Using custom keystore from GitHub Secrets..."
             echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/keystore/release.jks
-            echo "HAS_CUSTOM_KEYSTORE=true" >> $GITHUB_OUTPUT
           else
-            echo "No custom keystore found in GitHub Secrets. Generating self-signed signing key for test installation..."
+            echo "Generating self-signed release key for instant installation..."
             keytool -genkeypair -v \
               -keystore android/app/keystore/release.jks \
-              -alias "${{ secrets.KEY_ALIAS || 'goalpulse' }}" \
+              -alias "goalpulse" \
               -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass "${{ secrets.KEYSTORE_PASSWORD || 'goalpulse123' }}" \
-              -keypass "${{ secrets.KEY_PASSWORD || 'goalpulse123' }}" \
+              -storepass "goalpulse123" \
+              -keypass "goalpulse123" \
               -dname "CN=GoalPulse, OU=Sports, O=GoalPulse, L=Nairobi, ST=Nairobi, C=KE"
-            echo "HAS_CUSTOM_KEYSTORE=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Assemble Android APK
-        env:
-          RELEASE_STORE_FILE: keystore/release.jks
-          RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || 'goalpulse123' }}
-          RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS || 'goalpulse' }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'goalpulse123' }}
+      - name: Build Android APKs
         run: |
           cd android
           ./gradlew assembleRelease assembleDebug --no-daemon \
@@ -74,19 +68,14 @@ jobs:
             -PRELEASE_KEY_ALIAS="${{ secrets.KEY_ALIAS || 'goalpulse' }}" \
             -PRELEASE_KEY_PASSWORD="${{ secrets.KEY_PASSWORD || 'goalpulse123' }}"
 
-      - name: Prepare APK Artifacts for Download
+      - name: Collect APK Artifacts
         run: |
           mkdir -p release-apks
-          if ls android/app/build/outputs/apk/release/*.apk 1> /dev/null 2>&1; then
-            cp android/app/build/outputs/apk/release/*.apk release-apks/GoalPulse-release.apk
-          fi
-          if ls android/app/build/outputs/apk/debug/*.apk 1> /dev/null 2>&1; then
-            cp android/app/build/outputs/apk/debug/*.apk release-apks/GoalPulse-debug.apk
-          fi
-          echo "Generated APKs:"
+          find android/app/build/outputs/apk/ -name "*.apk" -exec cp {} release-apks/ \;
+          echo "Collected APK files:"
           ls -la release-apks/
 
-      - name: Upload APKs as GitHub Actions Artifact
+      - name: Upload APKs Artifact
         uses: actions/upload-artifact@v4
         with:
           name: GoalPulse-Android-APKs
