@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import type { Fixture, Competition, NewsArticle } from './types/football.ts';
 import { api } from './services/api.ts';
 import { usePreferences } from './hooks/usePreferences.ts';
@@ -50,6 +52,19 @@ export default function App() {
 
   // Polling ref to manage auto-refresh lifecycle
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Configure Native Status Bar so it does not overlay webview and matches theme
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      const isDark =
+        prefs.theme === 'dark' ||
+        (prefs.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+      StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: isDark ? '#120E22' : '#F0EFF8' }).catch(() => {});
+      StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
+    }
+  }, [prefs.theme]);
 
   // Offline detection
   useEffect(() => {
@@ -178,7 +193,7 @@ export default function App() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 pt-4">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+6rem)] pl-[calc(env(safe-area-inset-left,0px)+1rem)] pr-[calc(env(safe-area-inset-right,0px)+1rem)]">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-[#E6E3F2] dark:bg-[#1E1833] clay-card flex items-center justify-center border border-[#C9C2DD] dark:border-[#362C52]">

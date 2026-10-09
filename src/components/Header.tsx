@@ -20,7 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 px-4 py-3 bg-[#F0EFF8]/95 dark:bg-[#120E22]/95 backdrop-blur-md border-b border-[#C9C2DD] dark:border-[#362C52]">
+    <header className="sticky top-0 z-30 header-safe pb-3 bg-[#F0EFF8]/95 dark:bg-[#120E22]/95 backdrop-blur-md border-b border-[#C9C2DD] dark:border-[#362C52]">
       <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
         {/* Brand Lockup */}
         <div className="flex items-center gap-2.5">
