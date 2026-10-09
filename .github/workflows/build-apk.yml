@@ -36,8 +36,13 @@ jobs:
 
       - name: Accept Android SDK Licenses & Prepare Platform
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
+          if command -v sdkmanager &> /dev/null; then
+            yes | sdkmanager --licenses || true
+            sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
+          elif [ -f "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" || true
+          fi
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew
